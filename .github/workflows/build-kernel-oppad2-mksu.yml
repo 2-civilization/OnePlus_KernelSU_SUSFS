@@ -80,13 +80,12 @@ jobs:
           cd "$CONFIG/kernel_platform"
           
           echo "Running sed commands..."
-         rm -rf ./common/android/abi_gki_protected_exports_*
-         rm -rf ./msm-kernel/android/abi_gki_protected_exports_*
-#        sed -i 's/check_defconfig//' ./common/build.config.gki
-#        sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
-         sed -i 's/ -dirty//g' ./common/scripts/setlocalversion
-         sed -i 's/ -dirty//g' ./msm-kernel/scripts/setlocalversion
-
+           rm -rf ./common/android/abi_gki_protected_exports_*
+           rm -rf ./msm-kernel/android/abi_gki_protected_exports_*
+#          sed -i 's/check_defconfig//' ./common/build.config.gki
+#          sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+           sed -i 's/ -dirty//g' ./common/scripts/setlocalversion
+           sed -i 's/ -dirty//g' ./msm-kernel/scripts/setlocalversion
       - name: Add KernelSU
         run: |
           echo "Changing to configuration directory: $CONFIG..."
