@@ -77,8 +77,8 @@ jobs:
           sed -i 's/check_defconfig//' ./common/build.config.gki
           sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           sed -i 's/-dirty//' ./common/scripts/setlocalversion
-          rm -rf ./common/android/abi_gki_protected_exports_*
-          rm -rf ./msm-kernel/android/abi_gki_protected_exports_*
+          rm ./common/android/abi_gki_protected_exports_*
+          rm ./msm-kernel/android/abi_gki_protected_exports_*
 #         sed -i 's/check_defconfig//' ./common/build.config.gki
 #         sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           sed -i 's/ -dirty//g' ./common/scripts/setlocalversion
@@ -173,11 +173,6 @@ jobs:
           cd "$CONFIG"
           
           echo "Building the kernel..."
-          rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
-          #git config --global user.email "bins4us@hotmail.com"
-          #git config --global user.name "TheWildJames"
-          #git add *
-          #git commit -s -a -m "getting rid of -dirty"
           ./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple gki
       - name: Create Bootimgs Folder and Copy Images
         run: |
