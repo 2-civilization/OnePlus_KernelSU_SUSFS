@@ -1,5 +1,4 @@
 name: Build OnePlus Pad 2 Android 14 6.1 Kernel
-
 on:
   workflow_call:  # This allows this workflow to be called from another workflow
   workflow_dispatch:
@@ -7,7 +6,6 @@ on:
 jobs:
   build-kernel-a14-6-1-kernelsu-susfs:
     runs-on: ubuntu-latest
-
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@master
@@ -19,7 +17,6 @@ jobs:
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
-
       - name: Get build space
         run: |
           free -h
@@ -34,7 +31,6 @@ jobs:
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           
           echo "CONFIG set to: $CONFIG"
-
       - name: Install Repo
         run: |
           # Install dependencies
@@ -42,7 +38,6 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > ./git-repo/repo
           chmod a+rx ./git-repo/repo
           echo "REPO=$GITHUB_WORKSPACE/./git-repo/repo" >> $GITHUB_ENV
-
       - name: Clone AnyKernel3 and Other Dependencies
         run: |
           echo "Cloning AnyKernel3 and other dependencies..."
@@ -50,11 +45,9 @@ jobs:
           # Define the branch names using the matrix values
           ANYKERNEL_BRANCH="android14-6.1"
           SUSFS_BRANCH="gki-android14-6.1"
-
           # Debug print the branches
           echo "Using branch for AnyKernel3: $ANYKERNEL_BRANCH"
           echo "Using branch for SUSFS: $SUSFS_BRANCH"
-
           # Clone repositories using the branch names
           git clone https://github.com/TheWildJames/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
@@ -73,29 +66,13 @@ jobs:
           # Sync repo and apply patches
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
-
-      - name: Run sed and perl Commands
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd "$CONFIG/kernel_platform"
-          
-          echo "Running sed commands..."
-
-          rm -rf ./common/android/abi_gki_protected_exports_*
-          rm -rf ./msm-kernel/android/abi_gki_protected_exports_*
-          #sed -i 's/check_defconfig//' ./common/build.config.gki
-          #sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
-          sed -i 's/ -dirty//g' ./common/scripts/setlocalversion
-          sed -i 's/ -dirty//g' ./msm-kernel/scripts/setlocalversion
- 
-       - name: Add KernelSU
-         run: |
       - name: Add KernelSU
         run: |
           echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG/kernel_platform"
           
           echo "Adding KernelSU..."
+          # 替换为新的链接
           curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/main/kernel/setup.sh" | bash -
           cd ./KernelSU/kernel
           sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=12359/' ./Makefile
@@ -107,31 +84,41 @@ jobs:
           
           echo "Applying SUSFS patches..."
           
-          # Copy SUSFS patches
+          # 复制SUSFS补丁，调整目录为KernelSU
           cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
           cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
           cp ../../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-
-          cd ./KernelSU/kernel
+          cd ./KernelSU
           
-          # Apply SUSFS patch for KernelSU
+          # 应用SUSFS补丁
           # patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
-          cp ../../../kernel_patches/mksu_susfs.patch ./
-          patch -p1 < mksu_susfs.patch || true
+          cp ../../../kernel_patches/KernelSU-Next-Implement-SUSFS-v1.5.5-Universal.patch ./
+          patch -p1 < KernelSU-Next-Implement-SUSFS-v1.5.5-Universal.patch || true
           
-          # Change to common directory and apply SUSFS patch
+          # 切换到common目录并应用SUSFS补丁
           cd ../common
           patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
-
+          
+      - name: Apply Next-SUSFS Patches
+        run: |
+          echo "Changing to configuration directory: $CONFIG..."
+          cd "$CONFIG/kernel_platform"
+          
+          echo "Applying next SUSFS patches..."
+          # cp ../../kernel_patches/apk_sign.c_fix.patch ./
+          # patch -p1 -F 3 < apk_sign.c_fix.patch
+          # cp ../../kernel_patches/core_hook.c_fix.patch ./
+          # patch -p1 --fuzz=3 < core_hook.c_fix.patch
+          # cp ../../kernel_patches/selinux.c_fix.patch ./
+          # patch -p1 -F 3 < selinux.c_fix.patch
       - name: Apply Hide Stuff Patches
         run: |
           echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG/kernel_platform/common"
-          # Apply additional patch
+          # 应用额外的补丁
           cp ../../../kernel_patches/69_hide_stuff.patch ./
           patch -p1 -F 3 < 69_hide_stuff.patch || true
-
       - name: Add SUSFS Configuration Settings
         run: |
           echo "Changing to configuration directory: $CONFIG..."
@@ -139,7 +126,7 @@ jobs:
           
           echo "Adding configuration settings to gki_defconfig..."
           
-          # Add SUSFS configuration settings
+          # 添加SUSFS配置设置
           echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -158,22 +145,33 @@ jobs:
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
           
-          # Add additional tmpfs config setting
+          # 添加额外的tmpfs配置设置
           echo "CONFIG_TMPFS_XATTR=y" >> ./common/arch/arm64/configs/gki_defconfig
-
-          # Run perl command to modify UTS_VERSION
+      - name: Run sed and perl Commands
+        run: |
+          echo "Changing to configuration directory: $CONFIG..."
+          cd "$CONFIG/kernel_platform"
+          
+          echo "Running sed commands..."
+          
+          # 运行sed命令进行修改
+          sed -i 's/check_defconfig//' ./common/build.config.gki
+          sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+          sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          # 运行perl命令修改UTS_VERSION
+          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sat Apr 20 04:20:00 UTC 2024"}' ./common/scripts/mkcompile_h
       - name: Build the Kernel
         run: |
           echo "Changing to configuration directory: $CONFIG..."
           cd "$CONFIG"
           
           echo "Building the kernel..."
+          rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
           #git config --global user.email "bins4us@hotmail.com"
           #git config --global user.name "TheWildJames"
           #git add *
           #git commit -s -a -m "getting rid of -dirty"
           ./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple gki
-
       - name: Create Bootimgs Folder and Copy Images
         run: |
           echo "Changing to configuration directory: $CONFIG..."
