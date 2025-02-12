@@ -77,6 +77,12 @@ jobs:
           sed -i 's/check_defconfig//' ./common/build.config.gki
           sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           sed -i 's/-dirty//' ./common/scripts/setlocalversion
+          rm -rf ./common/android/abi_gki_protected_exports_*
+          rm -rf ./msm-kernel/android/abi_gki_protected_exports_*
+#         sed -i 's/check_defconfig//' ./common/build.config.gki
+#         sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+          sed -i 's/ -dirty//g' ./common/scripts/setlocalversion
+          sed -i 's/ -dirty//g' ./msm-kernel/scripts/setlocalversion
           # 运行perl命令修改UTS_VERSION
           perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sat Apr 20 04:20:00 UTC 2024"}' ./common/scripts/mkcompile_h
 
